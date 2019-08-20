@@ -142,19 +142,19 @@ class Extensions:
         Usage: !help [command | page number]
         """
         cmd = "!help";
-        page = -1;
+        page = "";
         message = "";
         if len(msg) >= 1:
             cmd = msg[0].lower();
         try:
             page = int(cmd);
         except ValueError:
-            page = -1;
-        if page > math.ceil(len(self.commands) / 10):
-            page = math.ceil(len(self.commands) / 10);
-        if page < 1 and page != -1:
-            page = 1;
-        if page >= 1 and page <= math.ceil(len(self.commands) / 10):
+            page = "";
+        if isinstance(page, int):
+            if page > math.ceil(len(self.commands) / 10):
+                page = math.ceil(len(self.commands) / 10);
+            if page < 1:
+                page = 1;
             message = "Commands, page {0} / {1}: ".format(page, math.ceil(len(self.commands) / 10));
             commands = "";
             if page == math.ceil(len(self.commands) / 10):

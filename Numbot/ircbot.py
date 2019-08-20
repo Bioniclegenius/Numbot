@@ -85,7 +85,7 @@ class ircbot:
                         Logger.Logger.log("***WHISPER FROM {0}: {1}".format(sender, recMsg));
                     else:
                         Logger.Logger.log("{0} {1}: {2}".format(receiver, sender, recMsg));
-                    if accessLevel >= 5:
+                    if accessLevel >= 6:
                         if msg[3][1:].lower() == "!reload":
                             try:
                                 importlib.reload(Extensions);
