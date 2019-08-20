@@ -20,12 +20,14 @@ def accesslvl(accesslevel):
 
 class Extensions:
     def __init__(self):
-        self.commands = [];
+        self.commands = {};
         attr = Extensions.__dict__.keys();
+        cmds = {};
         for a in attr:
             if hasattr(getattr(self, a), "__accesslevel__"):
-                self.commands.append(a);
-        self.commands = sorted(self.commands, key = lambda s: s.casefold());
+                cmds[a] = getattr(self, a).__accesslevel__;
+        for i in sorted(cmds.keys(), key = lambda s: s.casefold()):
+            self.commands[i] = cmds[i];
         return;
 
     def send(self, sock, message, log = True):
@@ -151,16 +153,20 @@ class Extensions:
         except ValueError:
             page = "";
         if isinstance(page, int):
-            if page > math.ceil(len(self.commands) / 10):
-                page = math.ceil(len(self.commands) / 10);
+            cmds = {}
+            for i in self.commands:
+                if self.commands[i] <= accesslvl:
+                    cmds[i] = self.commands[i];
+            if page > math.ceil(len(cmds) / 10):
+                page = math.ceil(len(cmds) / 10);
             if page < 1:
                 page = 1;
-            message = "Commands, page {0} / {1}: ".format(page, math.ceil(len(self.commands) / 10));
+            message = "Commands, page {0} / {1}: ".format(page, math.ceil(len(cmds) / 10));
             commands = "";
-            if page == math.ceil(len(self.commands) / 10):
-                commands = ", ".join(self.commands[10 * (page - 1):]);
-            else:
-                commands = ", ".join(self.commands[10 * (page - 1) : 10 * page - 1]);
+            for i in range(10 * (page - 1), min(10 * page, len(cmds))):
+                if commands != "":
+                    commands = "{0}, ".format(commands);
+                commands = "{0}{1}".format(commands, list(cmds.keys())[i]);
             message = "{0}{1}".format(message, commands);
         else:
             if len(cmd) > 1:
