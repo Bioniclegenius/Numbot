@@ -3,6 +3,7 @@ import Logger;
 import socket;
 import Extensions;
 import importlib;
+import time;
 
 class ircbot:
     """IRC Bot"""
@@ -59,10 +60,13 @@ class ircbot:
         return;
 
     def process(self, message):
+        verbose = (self.configValues[4] == 1);
         msg = message.split();
         if len(msg) >= 1:
             if msg[0].lower() == "ping":
-                self.send("PONG {0}".format(msg[1]), False);
+                if verbose:
+                    Logger.Logger.log(" ".join(msg));
+                self.send("PONG {0}".format(msg[1]), verbose);
                 #Logger.internal("Pinged!", Logger.colors.BLUE);
             elif len(msg) >= 3:
                 sender = msg[0];
@@ -103,30 +107,44 @@ class ircbot:
                         self.chat(sendTo, "Exception! Check console for details!");
                         Logger.Logger.error("Exception!");
                 elif msgtype == "396":
+                    if verbose:
+                        Logger.Logger.log(" ".join(msg));
                     channels = self.SQLite.GetChannels();
                     self.joinChannels(channels);
                     Logger.Logger.log(" ".join(msg));
                 elif msgtype == "330" and len(msg) >= 5:
+                    if verbose:
+                        Logger.Logger.log(" ".join(msg));
                     self.SQLite.TieUserEntry(msg[4], msg[3]);
                     Logger.Logger.log("{0} is logged in as {1}.".format(msg[4], msg[3]));
                 elif msgtype == "nick":
+                    if verbose:
+                        Logger.Logger.log(" ".join(msg));
                     self.SQLite.UpdateUsername(sender, receiver);
                     Logger.Logger.log("{0} -> {1}".format(sender, receiver));
                 elif msgtype == "quit":
+                    if verbose:
+                        Logger.Logger.log(" ".join(msg));
                     self.SQLite.ClearUsername(sender);
                     Logger.Logger.log("{0} quit: {1}".format(sender, " ".join(msg[2:])));
                 elif msgtype == "part":
+                    if verbose:
+                        Logger.Logger.log(" ".join(msg));
                     self.LowerUser(sender);
                     Logger.Logger.log("{0} left {1}".format(sender, receiver));
                 elif msgtype == "join":
+                    if verbose:
+                        Logger.Logger.log(" ".join(msg));
                     self.AddUser(sender);
                     Logger.Logger.log("{0} joined {1}".format(sender, receiver[1:]));
                 elif msgtype == "353":
+                    if verbose:
+                        Logger.Logger.log(" ".join(msg));
                     Logger.Logger.internal("Checking users in {0} list: {1}".format(receiver, " ".join(msg[5:])[1:]));
                     if len(msg) >= 6:
                         for x in msg[5:]:
                             self.AddUser(x);
-                elif msgtype in ["301", "311", "312", "313", "317", "318", "319", "366", "372", "375", "376", "378", "379", "671"]:#Filter these from the log, no action required
+                elif msgtype in ["301", "311", "312", "313", "317", "318", "319", "366", "372", "375", "376", "378", "379", "671"] and not verbose:#Filter these from the log, no action required
                     #https://www.alien.net.au/irc/irc2numerics.html is a fantastic resource for these things
                     #301: WHOIS - Currently Away
                     #311: WHOIS - <nick> <user> <host> * :<real_name> (information about user)

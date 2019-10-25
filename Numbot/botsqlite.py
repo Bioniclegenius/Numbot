@@ -30,11 +30,12 @@ class botsqlite:
     def CreateConfigTable(self):
         self.Execute('''
         CREATE TABLE Config (
-            Lock char(1) not null DEFAULT 'X' PRIMARY KEY,
+            Lock char(1) NOT NULL DEFAULT 'X' PRIMARY KEY,
             IRCNetworkAddress TEXT NOT NULL,
             Port INTEGER NOT NULL,
             Username TEXT NOT NULL,
             Password TEXT,
+            VerboseLogging INTEGER NOT NULL DEFAULT 0,
             constraint CK_T1_Locked CHECK (Lock = 'X')
         )
         ''');
@@ -110,7 +111,7 @@ class botsqlite:
         return False;
 
     def GetConfigValues(self):
-        self.Execute("SELECT IRCNetworkAddress, Port, Username, Password FROM CONFIG");
+        self.Execute("SELECT IRCNetworkAddress, Port, Username, Password, VerboseLogging FROM CONFIG");
         configValues = self.cur.fetchone();
         return configValues;
 

@@ -23,6 +23,9 @@ class Logger:
             message = "\t{0}".format(message);
         Logger.log("DEBUG: {0}\t{1}{2}".format(caller.filename[caller.filename.rindex("\\") + 1:], caller.lineno, message), color);
 
+    #To enable CLI colors in Windows 10:
+    #Regedit -> HKEY_CURRENT_USER\Console
+    #"VirtualTerminalLevel" = dword:0000001
     def log(message = "", color = colors.DEFAULT):
         message = "{0}".format(message);
         while message[-1:] == "\n" or message[-1:] == "\r":
