@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Numbot"
+    "\\Numbot",
+    "\\NumServer"
   ],
-  "SelectedNode": "\\Numbot\\botsqlite.py",
+  "SelectedNode": "\\Numbot.sln",
   "PreviewInSolutionExplorer": false
 }

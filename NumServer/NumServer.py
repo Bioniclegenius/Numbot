@@ -1,5 +1,4 @@
 import sys;
-sys.path.append("../Numbot");
 import ServerBase
 
 def main():

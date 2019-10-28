@@ -1,8 +1,10 @@
 import socket;
 import atexit;
-from Numbot.Logger import Logger, colors;
+from Logger import Logger, colors;
 import select;
 from _thread import *;
+from UserObject import UserObject;
+from datetime import datetime;
 
 class ServerBase:
     '''A pseudo-IRC server for testing local IRC stuff'''
@@ -31,17 +33,49 @@ class ServerBase:
         Logger.log("Now accepting incoming connections...");
         while True:
             conn, addr = self.sock.accept();
-            self.clients.append(conn);
-            Logger.log("User connected at {0}.".format(addr));
-            start_new_thread(self.clientThread, (self, conn, addr));
+            usr = UserObject();
+            usr.sock = conn;
+            usr.addr = addr;
+            usr.sendPing();
+            self.clients.append(usr);
+            Logger.log("User connected at {0}.".format(self.clients[-1].getAddress()));
+            start_new_thread(self.clientThread, (self.clients[-1],));
         return;
 
-    def clientThread(self, sock, addr):
+    def clientThread(self, usr):
+        oldMessage = "";
         while True:
             try:
-                message = sock.recv(2048);
+                message = "{0}{1}".format(oldMessage, usr.sock.recv(1024).decode("utf-8"));
+                while "\r\n" in message:
+                    msg = message[:message.index("\r\n")];
+                    if msg != "":
+                        msg2 = msg;
+                        if msg.split()[0] == "PASS":
+                            msg = "PASS ********";
+                        Logger.log("{0}: {1}".format(usr.getNick(), msg));
+                        self.process(usr, msg2);
+                    message = message[message.index("\r\n") + 2:];
+                oldMessage = message;
+            except ConnectionResetError:
+                self.removeClient(usr);
+                break;
             except Exception:
                 Logger.error();
+                break;
+        return;
+
+    def process(self, usr, msg):
+        msg = msg.split();
+        if msg[0].lower() == "nick" and len(msg) >= 2:
+            usr.nick = msg[1];
+        if msg[0].lower() == "pong" and len(msg) >= 2:
+            if msg[1][0] == ':':
+                msg[1] = msg[1][1:];
+            if msg[1] == usr.ping:
+                if usr.lastPingSuccess == datetime.min:
+                    usr.send("396", "Ping confirmed.", True);
+                usr.pinged();
         return;
 
     def broadcast(self, message, conn):
@@ -58,13 +92,14 @@ class ServerBase:
                     Logger.error("Client failed to receive message.");
         return;
 
-    def removeClient(self, conn):
-        if conn in self.clients:
-            self.clients.remove(conn);
+    def removeClient(self, usr):
+        if usr in self.clients:
+            self.clients.remove(usr);
+            Logger.log("{0} disconnected.".format(usr.getNick()));
         return;
 
     def exit_handler(self):
-        for conn in self.clients:
-            conn.close();
+        for usr in self.clients:
+            usr.close();
         self.sock.close();
         return;

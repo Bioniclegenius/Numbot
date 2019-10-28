@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.29418.71
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Numbot", "Numbot\Numbot.pyproj", "{F28D855E-1E45-47F5-98D8-7A72E027D3DC}"
 EndProject
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "NumServer", "NumServer\NumServer.pyproj", "{615F4AAA-2E63-4D86-B7EE-7645810CB93B}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "NumServer", "NumServer\NumServer.pyproj", "{6B89BD07-0229-4CBC-9437-679CE3231491}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +15,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{F28D855E-1E45-47F5-98D8-7A72E027D3DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F28D855E-1E45-47F5-98D8-7A72E027D3DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{615F4AAA-2E63-4D86-B7EE-7645810CB93B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{615F4AAA-2E63-4D86-B7EE-7645810CB93B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B89BD07-0229-4CBC-9437-679CE3231491}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B89BD07-0229-4CBC-9437-679CE3231491}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
