@@ -74,7 +74,7 @@ class ServerBase:
                 msg[1] = msg[1][1:];
             if msg[1] == usr.ping:
                 if usr.lastPingSuccess == datetime.min:
-                    usr.send("396", "Ping confirmed.", True);
+                    usr.send("SERVER", "396", usr.getNick(), "Ping confirmed.", True);
                 usr.pinged();
         return;
 

@@ -189,9 +189,51 @@ class botsqlite:
             self.Execute("INSERT INTO Users (RegisteredName) VALUES (?)", (registeredName));
         return;
 
+    def GetUserID(self, username):
+        username = username.lower();
+        self.Execute("SELECT COUNT(*) FROM Users JOIN UserChannels ON Users.UserID = UserChannels.UserID WHERE UserChannels.DisplayName = ?", (username));
+        if self.cur.fetchone()[0] >= 1:
+            self.Execute("SELECT Users.UserID FROM Users JOIN UserChannels ON Users.UserID = UserChannels.UserID WHERE UserChannels.DisplayName = ?", (username));
+            userID = self.cur.fetchone()[0];
+            return userID;
+        return;
+
     def GetQuoteCount(self):
         self.Execute("SELECT COUNT(*) FROM Quotes");
         return self.cur.fetchone()[0];
+
+    def GetQuoteByRow(self, quoteNumber):
+        self.Execute("SELECT Quote FROM (SELECT ROW_NUMBER() OVER (ORDER BY ID) RowNum, Quote, ID FROM Quotes) WHERE RowNum = ?", (quoteNumber));
+        return self.cur.fetchone()[0];
+
+    def GetQuoteBySearch(self, searchString, searchNumber):
+        if searchNumber < 1:
+            searchNumber = 1;
+        searchString = "%{}%".format(searchString.upper());
+        self.Execute("SELECT COUNT(*) FROM Quotes WHERE UPPER(Quote) LIKE ?", (searchString));
+        count = self.cur.fetchone()[0];
+        if searchNumber > count:
+            searchNumber = count;
+        if count > 0:
+            self.Execute("SELECT Quote FROM (Select ROW_NUMBER() OVER (ORDER BY ID) RowNum, Quote, ID FROM Quotes WHERE UPPER(Quote) LIKE ?) WHERE RowNum = ?", (searchString, searchNumber));
+            return self.cur.fetchone()[0];
+        return "";
+
+    def GetQuoteNumber(self, quote):
+        self.Execute("SELECT RowNum FROM (SELECT ROW_NUMBER() OVER (ORDER BY ID) RowNum, Quote, ID FROM Quotes) WHERE Quote = ?", (quote));
+        return self.cur.fetchone()[0];
+
+    def CheckQuoteExists(self, quote):
+        self.Execute("SELECT COUNT(*) FROM Quotes WHERE UPPER(Quote) = ?", (quote.upper()));
+        count = self.cur.fetchone()[0];
+        if count >= 1:
+            return True;
+        return False;
+
+    def AddQuote(self, quote, username):
+        userID = self.GetUserID(username);
+        self.Execute("INSERT INTO Quotes (Quote, UserID) VALUES (?, ?)", (quote, userID));
+        return;
 
     def DoesUserExist(self, username):
         username = username.lower();

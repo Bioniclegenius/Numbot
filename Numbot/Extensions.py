@@ -1,7 +1,9 @@
 from Logger import Logger, colors;
+import Quotes;
 from functools import wraps;
 import math;
 import inspect
+import importlib;
 
 #   self    accesslvl   sock    sqlite  sender  receiver    sendTo  msg
 #   0       1           2       3       4       5           6       7
@@ -20,6 +22,7 @@ def accesslvl(accesslevel):
 
 class Extensions:
     def __init__(self):
+        importlib.reload(Quotes);
         self.commands = {};
         attr = Extensions.__dict__.keys();
         cmds = {};
@@ -77,16 +80,6 @@ class Extensions:
         sqlite.Execute(" ".join(msg));
         response = sqlite.cur.fetchall();
         self.chat(sock, sendTo, response);
-
-    @accesslvl(0)
-    def quote(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
-        """
-        Returns a selected or random quote.
-
-        Usage: !quote [(# | search term [#<#>])]
-        """
-        Logger.debug(sqlite.GetQuoteCount());
-        return;
 
     @accesslvl(1)
     def setaccesslevel(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
@@ -203,4 +196,7 @@ class Extensions:
                 if hasattr(self, command):
                     if hasattr(getattr(self, command), "__accesslevel__"):
                         getattr(self, command)(accessLevel, sock, SQLite, sender, receiver, sendTo, msg[1:]);
+                elif hasattr(Quotes.Quotes, command):
+                    if hasattr(getattr(Quotes.Quotes, command), "__accesslevel__"):
+                        getattr(Quotes.Quotes, command)(self, accessLevel, sock, SQLite, sender, receiver, sendTo, msg[1:]);
         return;

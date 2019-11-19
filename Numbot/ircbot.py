@@ -1,5 +1,5 @@
 import botsqlite;
-from Logger import Logger, colors;
+import Logger;
 import socket;
 import Extensions;
 import importlib;
@@ -9,30 +9,30 @@ class ircbot:
     """IRC Bot"""
 
     def __init__(self):
-        Logger.internal("Starting bot...");
+        Logger.Logger.internal("Starting bot...");
         self.loadSQLite();
         self.SQLite.ClearLastUsernames();
-        Logger.internal("Getting config values...");
+        Logger.Logger.internal("Getting config values...");
         self.configValues = self.SQLite.GetConfigValues();
         self.connect();
-        Logger.internal("Loading extensions...");
+        Logger.Logger.internal("Loading extensions...");
         self.ext = Extensions.Extensions();
-        Logger.internal("Bot startup complete.");
+        Logger.Logger.internal("Bot startup complete.");
         return;
 
     def loadSQLite(self):
-        Logger.internal("Initializing SQLite...");
+        Logger.Logger.internal("Initializing SQLite...");
         self.SQLite = botsqlite.botsqlite();
-        Logger.internal("SQLite complete.");
+        Logger.Logger.internal("SQLite complete.");
         return;
 
     def connect(self):
-        Logger.internal("Connecting to IRC...");
+        Logger.Logger.internal("Connecting to IRC...");
         self.sock = socket.socket();
         self.sock.settimeout(600);
-        Logger.internal("\tIRC Network Address: {0}".format(self.configValues[0]));
-        Logger.internal("\tPort: {0}".format(self.configValues[1]));
-        Logger.internal("\tUsername: {0}".format(self.configValues[2]));
+        Logger.Logger.internal("\tIRC Network Address: {0}".format(self.configValues[0]));
+        Logger.Logger.internal("\tPort: {0}".format(self.configValues[1]));
+        Logger.Logger.internal("\tUsername: {0}".format(self.configValues[2]));
         self.sock.connect((self.configValues[0], self.configValues[1]));
         self.login();
         return;
@@ -66,9 +66,9 @@ class ircbot:
         if len(msg) >= 1:
             if msg[0].lower() == "ping":
                 if verbose:
-                    Logger.log(" ".join(msg));
+                    Logger.Logger.log(" ".join(msg));
                 self.send("PONG {0}".format(msg[1]), verbose);
-                #Logger.internal("Pinged!", Logger.colors.BLUE);
+                #Logger.Logger.internal("Pinged!", Logger.Logger.colors.BLUE);
             elif len(msg) >= 3:
                 sender = msg[0];
                 if "!" in sender:
@@ -87,9 +87,9 @@ class ircbot:
                     if "#" not in sendTo:
                         sendTo = sender;
                     if "#" not in receiver:
-                        Logger.log("***WHISPER FROM {0}: {1}".format(sender, recMsg));
+                        Logger.Logger.log("***WHISPER FROM {0}: {1}".format(sender, recMsg));
                     else:
-                        Logger.log("{0} {1}: {2}".format(receiver, sender, recMsg));
+                        Logger.Logger.log("{0} {1}: {2}".format(receiver, sender, recMsg));
                     if accessLevel >= 6:
                         if msg[3][1:].lower() == "!reload":
                             try:
@@ -101,47 +101,47 @@ class ircbot:
                                 self.chat(sendTo, "Reloaded!");
                             except Exception:
                                 self.chat(sendTo, "Error on reload!");
-                                Logger.error("Exception!");
+                                Logger.Logger.error("Exception!");
                     try:
                         self.ext.Action(self.sock, self.SQLite, sender, receiver, " ".join(msg[3:])[1:]);
                     except Exception:
                         self.chat(sendTo, "Exception! Check console for details!");
-                        Logger.error("Exception!");
+                        Logger.Logger.error("Exception!");
                 elif msgtype == "396":
                     if verbose:
-                        Logger.log(" ".join(msg));
+                        Logger.Logger.log(" ".join(msg));
                     channels = self.SQLite.GetChannels();
                     self.joinChannels(channels);
-                    Logger.log(" ".join(msg));
+                    Logger.Logger.log(" ".join(msg));
                 elif msgtype == "330" and len(msg) >= 5:
                     if verbose:
-                        Logger.log(" ".join(msg));
+                        Logger.Logger.log(" ".join(msg));
                     self.SQLite.TieUserEntry(msg[4], msg[3]);
-                    Logger.log("{0} is logged in as {1}.".format(msg[4], msg[3]));
+                    Logger.Logger.log("{0} is logged in as {1}.".format(msg[4], msg[3]));
                 elif msgtype == "nick":
                     if verbose:
-                        Logger.log(" ".join(msg));
+                        Logger.Logger.log(" ".join(msg));
                     self.SQLite.UpdateUsername(sender, receiver);
-                    Logger.log("{0} -> {1}".format(sender, receiver));
+                    Logger.Logger.log("{0} -> {1}".format(sender, receiver));
                 elif msgtype == "quit":
                     if verbose:
-                        Logger.log(" ".join(msg));
+                        Logger.Logger.log(" ".join(msg));
                     self.SQLite.ClearUsername(sender);
-                    Logger.log("{0} quit: {1}".format(sender, " ".join(msg[2:])));
+                    Logger.Logger.log("{0} quit: {1}".format(sender, " ".join(msg[2:])));
                 elif msgtype == "part":
                     if verbose:
-                        Logger.log(" ".join(msg));
+                        Logger.Logger.log(" ".join(msg));
                     self.LowerUser(sender);
-                    Logger.log("{0} left {1}".format(sender, receiver));
+                    Logger.Logger.log("{0} left {1}".format(sender, receiver));
                 elif msgtype == "join":
                     if verbose:
-                        Logger.log(" ".join(msg));
+                        Logger.Logger.log(" ".join(msg));
                     self.AddUser(sender);
-                    Logger.log("{0} joined {1}".format(sender, receiver[1:]));
+                    Logger.Logger.log("{0} joined {1}".format(sender, receiver[1:]));
                 elif msgtype == "353":
                     if verbose:
-                        Logger.log(" ".join(msg));
-                    Logger.internal("Checking users in {0} list: {1}".format(receiver, " ".join(msg[5:])[1:]));
+                        Logger.Logger.log(" ".join(msg));
+                    Logger.Logger.internal("Checking users in {0} list: {1}".format(receiver, " ".join(msg[5:])[1:]));
                     if len(msg) >= 6:
                         for x in msg[5:]:
                             self.AddUser(x);
@@ -163,12 +163,12 @@ class ircbot:
                     #379: WHOIS - Using modes <user modes>
                     #671: WHOIS - User is connected securely, like via SSLv2 or TLSv1 or other types
                     if verbose:
-                        Logger.log(" ".join(msg));
+                        Logger.Logger.log(" ".join(msg));
                     pass;
                 else:
-                    Logger.log(" ".join(msg));
+                    Logger.Logger.log(" ".join(msg));
             else:
-                Logger.log(" ".join(msg));
+                Logger.Logger.log(" ".join(msg));
         return;
 
     def ParseUsername(self, username):
@@ -204,7 +204,7 @@ class ircbot:
         try:
             rec = self.sock.recv(1024).decode("utf-8");
         except Exception:
-            Logger.error("Exception on receive!");
+            Logger.Logger.error("Exception on receive!");
             self.connect();
         return rec;
 
@@ -213,11 +213,11 @@ class ircbot:
         if msg.split()[0] == "PASS":
             msg = "PASS ********";
         if log == True:
-            Logger.log(msg);
+            Logger.Logger.log(msg);
         try:
             self.sock.send("{0}\r\n".format(message).encode("utf-8"));
         except Exception:
             if log == False:
-                Logger.log(msg);
-            Logger.error("Exception on send!");
+                Logger.Logger.log(msg);
+            Logger.Logger.error("Exception on send!");
         return;

@@ -36,9 +36,9 @@ class UserObject:
         self.lastPinged = datetime.min;
         return;
 
-    def send(self, msgType, msg, log = False):
+    def send(self, source, destination, msgType, msg, log = False):
         try:
-            msg = ":SERVER {0} {1} :{2}".format(msgType, self.getNick(), msg);
+            msg = ":{0} {1} {2} :{3}".format(source, msgType, destination, msg);
             if log:
                 Logger.log(msg);
             self.sock.send("{0}\r\n".format(msg).encode("utf-8"));
