@@ -4,6 +4,7 @@ from functools import wraps;
 import math;
 import inspect
 import importlib;
+import pkgutil;
 
 #   self    accesslvl   sock    sqlite  sender  receiver    sendTo  msg
 #   0       1           2       3       4       5           6       7
@@ -80,6 +81,7 @@ class Extensions:
         sqlite.Execute(" ".join(msg));
         response = sqlite.cur.fetchall();
         self.chat(sock, sendTo, response);
+        return;
 
     @accesslvl(1)
     def setaccesslevel(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
@@ -128,6 +130,21 @@ class Extensions:
         if len(msg) >= 1:
             user = msg[0];
         self.chat(sock, sendTo, "{0} has an access level of {1}.".format(user, sqlite.GetAccessLevel(user)));
+        return;
+
+    @accesslvl(6)
+    def debug(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
+        """
+        Debug command to get various bits of information.
+
+        Usage: !debug [whatever parameters coded for at the moment]
+        """
+        packages = "";
+        for p in pkgutil.iter_modules():
+            if packages != "":
+                packages = "{}, {}".format(packages, p[1]);
+        self.chat(sock, sendTo, packages);
+        return;
 
     @accesslvl(0)
     def help(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):

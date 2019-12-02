@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 *.db
 
+# Visual Studio stuff
+*.suo
+
 # C extensions
 *.so
 
