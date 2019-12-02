@@ -4,11 +4,14 @@ import socket;
 import Extensions;
 import importlib;
 import time;
+import msvcrt;
+import ssl;
 
 class ircbot:
     """IRC Bot"""
 
     def __init__(self):
+        self.manualChat = "";
         Logger.Logger.internal("Starting bot...");
         self.loadSQLite();
         self.SQLite.ClearLastUsernames();
@@ -28,8 +31,10 @@ class ircbot:
 
     def connect(self):
         Logger.Logger.internal("Connecting to IRC...");
-        self.sock = socket.socket();
-        self.sock.settimeout(600);
+        self.basesock = socket.socket();
+        self.basesock.settimeout(1);
+        context = ssl.create_default_context();
+        self.sock = context.wrap_socket(self.basesock, server_hostname=self.configValues[0]);
         Logger.Logger.internal("\tIRC Network Address: {0}".format(self.configValues[0]));
         Logger.Logger.internal("\tPort: {0}".format(self.configValues[1]));
         Logger.Logger.internal("\tUsername: {0}".format(self.configValues[2]));
@@ -40,6 +45,15 @@ class ircbot:
     def run(self):
         oldRec = "";
         while True:
+            while msvcrt.kbhit():
+                key = msvcrt.getche();
+                if key.decode("utf-8").lower() in "1234567890!@#$%^&*)-=_+`~qwertyuiopasdfghjklzxcvbnm,./[]{}|'\";:<>? ":
+                    self.manualChat = "{}{}".format(self.manualChat,key.decode("utf-8"));
+                if key == b'\x08' and len(self.manualChat) > 0:#backspace
+                    self.manualChat = self.manualChat[:-1];
+                if key == b'\r' and len(self.manualChat) > 0:#return
+                    self.send(self.manualChat);
+                    self.manualChat = "";
             rec = "{0}{1}".format(oldRec, self.receive());
             while "\r\n" in rec:
                 rec2 = rec[:rec.index("\r\n")];
@@ -203,6 +217,8 @@ class ircbot:
         rec = "None";
         try:
             rec = self.sock.recv(1024).decode("utf-8");
+        except socket.timeout:
+            return "";
         except Exception:
             Logger.Logger.error("Exception on receive!");
             self.connect();

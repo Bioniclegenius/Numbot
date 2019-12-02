@@ -4,7 +4,7 @@ from functools import wraps;
 import math;
 import inspect
 import importlib;
-import pkgutil;
+import types;
 
 #   self    accesslvl   sock    sqlite  sender  receiver    sendTo  msg
 #   0       1           2       3       4       5           6       7
@@ -23,15 +23,8 @@ def accesslvl(accesslevel):
 
 class Extensions:
     def __init__(self):
-        importlib.reload(Quotes);
-        self.commands = {};
-        attr = Extensions.__dict__.keys();
-        cmds = {};
-        for a in attr:
-            if hasattr(getattr(self, a), "__accesslevel__"):
-                cmds[a] = getattr(self, a).__accesslevel__;
-        for i in sorted(cmds.keys(), key = lambda s: s.casefold()):
-            self.commands[i] = cmds[i];
+        for imp in Extensions.imports():
+            importlib.reload(imp);
         return;
 
     def send(self, sock, message, log = True):
@@ -51,6 +44,28 @@ class Extensions:
     def chat(self, sock, sendTo, message):
         self.send(sock, "PRIVMSG {0} :{1}".format(sendTo, message));
         return;
+
+    def imports():
+        for name, val in globals().items():
+            if isinstance(val, types.ModuleType):
+                yield val;
+
+    def getCommands():
+        imps = list(Extensions.imports());
+        commands = [];
+        for a in Extensions.__dict__.keys():
+            if hasattr(getattr(Extensions, a), "__accesslevel__"):
+                commands.append((a, getattr(getattr(Extensions, a), "__accesslevel__")));
+        for imp in imps:
+            for cls in imp.__dict__:
+                obj = getattr(imp, cls);
+                if isinstance(obj, type) and obj.__module__ == imp.__name__:
+                    for a in obj.__dict__.keys():
+                        if hasattr(getattr(obj, a), "__accesslevel__"):
+                            commands.append((a, getattr(getattr(obj, a), "__accesslevel__")));
+        commands.sort(key = lambda x: x[0], reverse=False);
+        commands.sort(key = lambda x: x[1], reverse=False);
+        return commands;
 
     @accesslvl(6)
     def reload(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
@@ -139,11 +154,14 @@ class Extensions:
 
         Usage: !debug [whatever parameters coded for at the moment]
         """
-        packages = "";
-        for p in self.modules.iteritems():
-            if packages != "":
-                packages = "{}, {}".format(packages, p[1]);
-        self.chat(sock, sendTo, packages);
+        message = "";
+        for cmd in Extensions.getCommands():
+            if message != "":
+                message = "{}, ".format(message);
+            message = "{}[{}] {}".format(message, cmd[1], cmd[0]);
+        if message == "":
+            message = "None";
+        self.chat(sock, sendTo, message);
         return;
 
     @accesslvl(0)
@@ -164,9 +182,9 @@ class Extensions:
             page = "";
         if isinstance(page, int):
             cmds = {}
-            for i in self.commands:
-                if self.commands[i] <= accesslvl:
-                    cmds[i] = self.commands[i];
+            for i in Extensions.getCommands():
+                if i[1] <= accesslvl:
+                    cmds[i[0]] = i[1];
             if page > math.ceil(len(cmds) / 10):
                 page = math.ceil(len(cmds) / 10);
             if page < 1:
@@ -196,7 +214,26 @@ class Extensions:
                 else:
                     message = "{0} is not a command, {1}!".format(cmd, sender);
             else:
-                message = "{0} is not a command, {1}!".format(cmd, sender);
+                found = False;
+                for imp in Extensions.imports():
+                    for clss in imp.__dict__:
+                        obj = getattr(imp, clss);
+                        if isinstance(obj, type) and obj.__module__ == imp.__name__:
+                            if hasattr(obj, cmd):
+                                if hasattr(getattr(obj, cmd), "__accesslevel__"):
+                                    func = getattr(obj, cmd);
+                                    docString = func.__doc__;
+                                    if docString == None:
+                                        docString = "No description found.";
+                                    docString = docString.replace("\n", " ");
+                                    docString = " ".join(docString.split());
+                                    accesslevel = "";
+                                    if hasattr(func, "__accesslevel__"):
+                                        found = True;
+                                        accesslevel = "Access level: {0}".format(func.__accesslevel__);
+                                        message = "!{0} - {1}. {2}".format(func.__name__, accesslevel, docString);
+                if not found:
+                    message = "{0} is not a command, {1}!".format(cmd, sender);
         if message != "":
             self.chat(sock, sendTo, message);
         return;
@@ -213,7 +250,11 @@ class Extensions:
                 if hasattr(self, command):
                     if hasattr(getattr(self, command), "__accesslevel__"):
                         getattr(self, command)(accessLevel, sock, SQLite, sender, receiver, sendTo, msg[1:]);
-                elif hasattr(Quotes.Quotes, command):
-                    if hasattr(getattr(Quotes.Quotes, command), "__accesslevel__"):
-                        getattr(Quotes.Quotes, command)(self, accessLevel, sock, SQLite, sender, receiver, sendTo, msg[1:]);
+                for imp in Extensions.imports():
+                    for clss in imp.__dict__:
+                        obj = getattr(imp, clss);
+                        if isinstance(obj, type) and obj.__module__ == imp.__name__:
+                            if hasattr(obj, command):
+                                if hasattr(getattr(obj, command), "__accesslevel__"):
+                                    getattr(obj,command)(self, accessLevel, sock, SQLite, sender, receiver, sendTo, msg[1:]);
         return;
