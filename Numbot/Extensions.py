@@ -140,7 +140,7 @@ class Extensions:
         Usage: !debug [whatever parameters coded for at the moment]
         """
         packages = "";
-        for p in this.modules.iteritems():
+        for p in self.modules.iteritems():
             if packages != "":
                 packages = "{}, {}".format(packages, p[1]);
         self.chat(sock, sendTo, packages);
