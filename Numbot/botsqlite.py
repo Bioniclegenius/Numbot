@@ -196,7 +196,7 @@ class botsqlite:
             self.Execute("SELECT Users.UserID FROM Users JOIN UserChannels ON Users.UserID = UserChannels.UserID WHERE UserChannels.DisplayName = ?", (username));
             userID = self.cur.fetchone()[0];
             return userID;
-        return;
+        return -1;
 
     def GetQuoteCount(self):
         self.Execute("SELECT COUNT(*) FROM Quotes");
@@ -247,6 +247,47 @@ class botsqlite:
         username = username.lower();
         self.Execute("SELECT Users.RegisteredName FROM Users JOIN UserChannels ON Users.UserID = UserChannels.UserID WHERE UserChannels.DisplayName = ?", (username));
         return self.cur.fetchone()[0];
+
+    def SetUserData(self, username, fieldName, value):
+        username = username.lower();
+        fieldName = fieldName.lower();#Case-insensitive
+        value = str(value);#Ensure that all values are strings
+        userID = self.GetUserID(username);
+        if userID == -1:
+            return -1;#Error: Not a registered user
+        self.Execute("SELECT COUNT(*) FROM UserData WHERE UserID = ? AND lower(FieldName) = ?", (userID, fieldName));
+        count = self.cur.fetchone()[0];
+        if count >= 1:
+            self.Execute("UPDATE UserData SET FieldValue = ? WHERE UserID = ? AND lower(FieldName) = ?", (value, userID, fieldName));
+        else:
+            self.Execute("INSERT INTO UserData (UserID, FieldName, FieldValue) VALUES (?, ?, ?)", (userID, fieldName, value));
+        return 0;#Success
+
+    def GetUserData(self, username, fieldName):
+        username = username.lower();
+        fieldName = fieldName.lower();#Case-insensitive
+        userID = self.GetUserID(username);
+        if userID == -1:
+            return -1;#Error: Not a registered user;
+        self.Execute("SELECT COUNT(*) FROM UserData WHERE UserID = ? AND lower(FieldName) = ?", (userID, fieldName));
+        count = self.cur.fetchone()[0];
+        if count == 0:
+            return None;
+        self.Execute("SELECT FieldValue FROM UserData WHERE UserID = ? AND lower(FieldName) = ?", (userID, fieldName));
+        return self.cur.fetchone()[0];
+
+    def DeleteUserData(self, username, fieldName):
+        username = username.lower();
+        fieldName = fieldName.lower();#Case-insensitive
+        userID = self.GetUserID(username);
+        if userID == -1:
+            return -1;#Error: Not a registered user.
+        self.Execute("SELECT COUNT(*) FROM UserData WHERE UserID = ? AND lower(FieldName) = ?", (userID, fieldName));
+        count = self.cur.fetchone()[0];
+        if count == 0:
+            return -2;#Error: Field doesn't exist for user.
+        self.Execute("DELETE FROM UserData WHERE UserID = ? AND lower(FieldName) = ?", (userID, fieldName));
+        return 0;
 
     def Execute(self, command, params = ()):
         command = "{0}".format(command);

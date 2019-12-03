@@ -42,7 +42,8 @@ class Extensions:
         return;
 
     def chat(self, sock, sendTo, message):
-        self.send(sock, "PRIVMSG {0} :{1}".format(sendTo, message));
+        if message != "":
+            self.send(sock, "PRIVMSG {0} :{1}".format(sendTo, message));
         return;
 
     def imports():
@@ -66,6 +67,11 @@ class Extensions:
         commands.sort(key = lambda x: x[0], reverse=False);
         commands.sort(key = lambda x: x[1], reverse=False);
         return commands;
+
+    @accesslvl(0)
+    def ping(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
+        self.chat(sock, sendTo, "Pong!");
+        return;
 
     @accesslvl(6)
     def reload(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):

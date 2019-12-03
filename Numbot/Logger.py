@@ -4,6 +4,9 @@ from enum import Enum;
 import traceback;
 from datetime import datetime;
 
+#To enable CLI colors in Windows 10:
+#Regedit -> HKEY_CURRENT_USER\Console
+#"VirtualTerminalLevel" = dword:0000001
 class colors(Enum):
     BLACK = "\x1b[1;30;40m";
     RED = "\x1b[1;31;40m";
@@ -16,16 +19,12 @@ class colors(Enum):
     DEFAULT = "\x1b[0m";
 
 class Logger:
-
     def debug(message = "", color = colors.YELLOW):
         caller = inspect.getframeinfo(inspect.stack()[1][0]);
         if message != "":
             message = "\t{0}".format(message);
         Logger.log("DEBUG: {0}\t{1}{2}".format(caller.filename[caller.filename.rindex("\\") + 1:], caller.lineno, message), color);
 
-    #To enable CLI colors in Windows 10:
-    #Regedit -> HKEY_CURRENT_USER\Console
-    #"VirtualTerminalLevel" = dword:0000001
     def log(message = "", color = colors.DEFAULT):
         message = "{0}".format(message);
         while message[-1:] == "\n" or message[-1:] == "\r":
