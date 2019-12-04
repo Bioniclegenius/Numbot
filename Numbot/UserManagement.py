@@ -153,3 +153,22 @@ class UserManagement:
             message = "{} has {} points.".format(username, points);
         self.chat(sock, sendTo, message);
         return;
+
+    @accesslvl(1)
+    def userid(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
+        """
+        Gets the user ID for a given user, or yourself.
+
+        Usage: !userid <username>
+        """
+        message = "";
+        username = sender;
+        if len(msg) >= 1:
+            username = msg[0];
+        response = sqlite.GetUserID(username);
+        if response == -1:
+            message = "{} is not a registered user, {}!".format(username, sender);
+        else:
+            message = "{} has a user ID of {}.".format(username, response);
+        self.chat(sock, sendTo, message);
+        return;
