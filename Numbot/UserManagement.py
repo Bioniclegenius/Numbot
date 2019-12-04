@@ -3,6 +3,7 @@ from functools import wraps;
 import math;
 import random;
 import inspect
+import FieldNames;
 
 #   self    accesslvl   sock    sqlite  sender  receiver    sendTo  msg
 #   0       1           2       3       4       5           6       7
@@ -85,5 +86,70 @@ class UserManagement:
                 message = "{} does not have a value for '{}', {}!".format(username, fieldName, sender);
             else:
                 message = "'{}' for {} successfully deleted.".format(fieldName, username);
+        self.chat(sock, sendTo, message);
+        return;
+
+    @accesslvl(4)
+    def addpoints(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
+        """
+        Adds points to a specified user. Users cannot go into negative points.
+
+        Usage: !addpoints [username] [number of points]
+        """
+        message = "";
+        if len(msg) < 2:
+            message = "You must enter a username and a number of points to add, {}!".format(sender);
+        else:
+            username = msg[0];
+            sendID = sqlite.GetUserID(sender);
+            subjectID = sqlite.GetUserID(username);
+            if sendID != subjectID:
+                pointsToAdd = 0;
+                validEntry = False;
+                try:
+                    pointsToAdd = int(msg[1]);
+                    validEntry = True;
+                except ValueError:
+                    message = "The number of points must be an integer!";
+                if validEntry:
+                    curPoints = sqlite.GetUserData(username, FieldNames.General.Points);
+                    if curPoints == -1:
+                        message = "{} is not a registered user, {}!".format(username, sender);
+                    elif curPoints == None:
+                        curPoints = 0;
+                    else:
+                        curPoints = int(curPoints);
+                    curPoints += pointsToAdd;
+                    if curPoints < 0:
+                        curPoints = 0;
+                    sqlite.SetUserData(username, FieldNames.General.Points, str(curPoints));
+                    message = "{} now has {} points.".format(username, curPoints);
+            else:
+                message = "You cannot give yourself points, {}!".format(sender);
+        self.chat(sock, sendTo, message);
+        return;
+
+    @accesslvl(1)
+    def points(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
+        """
+        Gets the number of points for a given user, or yourself.
+
+        Usage: !points <username>
+        """
+        message = "";
+        username = sender;
+        if len(msg) >= 1:
+            username = msg[0];
+        response = sqlite.GetUserData(username, FieldNames.General.Points);
+        points = 0;
+        if response == -1:
+            message = "{} is not a registered user, {}!".format(username, sender);
+        elif response == None:
+            points = 0;
+            sqlite.SetUserData(username, FieldNames.General.Points, str(points));
+        else:
+            points = int(response);
+        if message == "":
+            message = "{} has {} points.".format(username, points);
         self.chat(sock, sendTo, message);
         return;

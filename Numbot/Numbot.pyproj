@@ -27,6 +27,9 @@
     <Compile Include="Extensions.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="FieldNames.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="ircbot.py">
       <SubType>Code</SubType>
     </Compile>

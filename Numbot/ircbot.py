@@ -32,7 +32,7 @@ class ircbot:
     def connect(self):
         Logger.Logger.internal("Connecting to IRC...");
         self.basesock = socket.socket();
-        self.basesock.settimeout(1);
+        self.basesock.settimeout(30);
         context = ssl.create_default_context();
         self.sock = context.wrap_socket(self.basesock, server_hostname=self.configValues[0]);
         Logger.Logger.internal("\tIRC Network Address: {0}".format(self.configValues[0]));
@@ -40,6 +40,7 @@ class ircbot:
         Logger.Logger.internal("\tUsername: {0}".format(self.configValues[2]));
         self.sock.connect((self.configValues[0], self.configValues[1]));
         self.login();
+        self.sock.settimeout(1);
         return;
 
     def run(self):

@@ -19,17 +19,17 @@ class colors(Enum):
     DEFAULT = "\x1b[0m";
 
 class Logger:
-    def debug(message = "", color = colors.YELLOW):
-        caller = inspect.getframeinfo(inspect.stack()[1][0]);
-        if message != "":
-            message = "\t{0}".format(message);
-        Logger.log("DEBUG: {0}\t{1}{2}".format(caller.filename[caller.filename.rindex("\\") + 1:], caller.lineno, message), color);
-
     def log(message = "", color = colors.DEFAULT):
         message = "{0}".format(message);
         while message[-1:] == "\n" or message[-1:] == "\r":
             message = message[:-1];
         print("{0}{1}{2}: {3}{4}{5}".format(colors.CYAN.value, datetime.now(), colors.DEFAULT.value, color.value, message, colors.DEFAULT.value));
+
+    def debug(message = "", color = colors.YELLOW):
+        caller = inspect.getframeinfo(inspect.stack()[1][0]);
+        if message != "":
+            message = "\t{0}".format(message);
+        Logger.log("DEBUG: {0}\t{1}{2}".format(caller.filename[caller.filename.rindex("\\") + 1:], caller.lineno, message), color);
 
     def internal(message = "", color = colors.GREEN):
         Logger.log(message, color);

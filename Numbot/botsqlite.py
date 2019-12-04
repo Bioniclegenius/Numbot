@@ -17,7 +17,7 @@ class botsqlite:
         return;
 
     def VerifyDBAndSetup(self):
-        tables = ["Config", "Channels", "Users", "UserData", "UserChannels", "IdleRPGFields", "Quotes"];
+        tables = ["Config", "Channels", "Users", "UserData", "UserChannels", "Quotes"];
         for i in tables:
             if self.CheckTableExists(i) == False:
                 Logger.internal("\t\tCreating {0} table...".format(i));
@@ -78,14 +78,6 @@ class botsqlite:
             DisplayName TEXT NOT NULL PRIMARY KEY,
             NumChannels INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY(UserID) REFERENCES USERS(UserID)
-        )
-        ''');
-        return;
-
-    def CreateIdleRPGFieldsTable(self):
-        self.Execute('''
-        CREATE TABLE IdleRPGFields (
-            FieldName TEXT NOT NULL PRIMARY KEY
         )
         ''');
         return;
@@ -196,6 +188,12 @@ class botsqlite:
             self.Execute("SELECT Users.UserID FROM Users JOIN UserChannels ON Users.UserID = UserChannels.UserID WHERE UserChannels.DisplayName = ?", (username));
             userID = self.cur.fetchone()[0];
             return userID;
+        else:
+            self.Execute("SELECT COUNT(*) FROM Users WHERE RegisteredName = ?", (username));
+            if self.cur.fetchone()[0] >= 1:
+                self.Execute("SELECT UserID FROM Users WHERE RegisteredName = ?", (username));
+                userID = self.cur.fetchone()[0];
+                return userID;
         return -1;
 
     def GetQuoteCount(self):
