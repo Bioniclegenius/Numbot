@@ -189,10 +189,11 @@ class Extensions:
         except ValueError:
             page = "";
         if isinstance(page, int):
-            cmds = {}
+            cmds = []
             for i in Extensions.getCommands():
                 if i[1] <= accesslvl:
-                    cmds[i[0]] = i[1];
+                    cmds.append(i[0]);
+            cmds.sort();
             if page > math.ceil(len(cmds) / 10):
                 page = math.ceil(len(cmds) / 10);
             if page < 1:
@@ -202,7 +203,7 @@ class Extensions:
             for i in range(10 * (page - 1), min(10 * page, len(cmds))):
                 if commands != "":
                     commands = "{0}, ".format(commands);
-                commands = "{0}{1}".format(commands, list(cmds.keys())[i]);
+                commands = "{0}{1}".format(commands, cmds[i]);
             message = "{0}{1}".format(message, commands);
         else:
             if len(cmd) > 1:
