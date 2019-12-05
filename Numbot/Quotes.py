@@ -19,7 +19,17 @@ def accesslvl(accesslevel):
         return accesslevelwrapper
     return accesslevel_decorator
 
+def prefix(pref):
+    def prefix_decorator(func):
+        @wraps(func)
+        def prefixwrapper(*args):
+            func(*args)
+        prefixwrapper.__prefixed__ = pref
+        return prefixwrapper
+    return prefix_decorator
+
 class Quotes:
+
     @accesslvl(0)
     def quote(bot, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
         """

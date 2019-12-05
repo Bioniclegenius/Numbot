@@ -20,7 +20,17 @@ def accesslvl(accesslevel):
         return accesslevelwrapper
     return accesslevel_decorator
 
+def prefix(pref):
+    def prefix_decorator(func):
+        @wraps(func)
+        def prefixwrapper(*args):
+            func(*args)
+        prefixwrapper.__prefixed__ = pref
+        return prefixwrapper
+    return prefix_decorator
+
 class UserManagement:
+
     @accesslvl(6)
     def setdata(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
         """
@@ -171,4 +181,53 @@ class UserManagement:
         else:
             message = "{} has a user ID of {}.".format(username, response);
         self.chat(sock, sendTo, message);
+        return;
+
+    @accesslvl(1)
+    def setaccesslevel(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
+        """
+        Changes a selected user's access level. You cannot change your own or of people your level or higher, and you cannot set a user to your level or higher. Only works on registered users, and must be the registered account name.
+
+        Usage: !setaccesslevel <user> <level>
+        """
+        message = "";
+        if len(msg) != 2:
+            message = "You must enter a username and an access level to set them to!";
+        else:
+            accesslevel = -1;
+            try:
+                accesslevel = int(msg[1]);
+            except ValueError:
+                message = "You must enter a valid number for access level!";
+            if accesslevel <= 0:
+                message = "Target access level must be greater than zero!";
+            else:
+                if accesslevel >= accesslvl:
+                    message = "You cannot set an access level equal to or higher than your own!";
+                else:
+                    if sqlite.DoesUserExist(msg[0]) == False:
+                        message = "That user does not exist!";
+                    else:
+                        if sqlite.GetAccessLevel(msg[0]) >= accesslvl:
+                            message = "You cannot alter the access level of a user already at or above yours!";
+                        else:
+                            if sqlite.GetRegisteredName(sender).lower() == msg[0].lower():
+                                message = "You cannot alter your own access level!";
+                            else:
+                                sqlite.SetAccessLevel(msg[0], accesslevel);
+                                message = "User {0}'s access level successfully changed to {1}.".format(msg[0], accesslevel);
+        self.chat(sock, sendTo, message);
+        return;
+
+    @accesslvl(0)
+    def accesslevel(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
+        """
+        Returns the target's access level.
+
+        Usage: !accesslevel [target]
+        """
+        user = sender;
+        if len(msg) >= 1:
+            user = msg[0];
+        self.chat(sock, sendTo, "{0} has an access level of {1}.".format(user, sqlite.GetAccessLevel(user)));
         return;

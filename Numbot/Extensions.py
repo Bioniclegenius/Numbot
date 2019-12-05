@@ -23,7 +23,17 @@ def accesslvl(accesslevel):
         return accesslevelwrapper
     return accesslevel_decorator
 
+def prefix(pref):
+    def prefix_decorator(func):
+        @wraps(func)
+        def prefixwrapper(*args):
+            func(*args)
+        prefixwrapper.__prefixed__ = pref
+        return prefixwrapper
+    return prefix_decorator
+
 class Extensions:
+
     def __init__(self):
         for imp in Extensions.imports():
             importlib.reload(imp);
@@ -57,120 +67,18 @@ class Extensions:
         imps = list(Extensions.imports());
         commands = [];
         for a in Extensions.__dict__.keys():
-            if hasattr(getattr(Extensions, a), "__accesslevel__"):
+            if hasattr(getattr(Extensions, a), "__accesslevel__") and not hasattr(getattr(Extensions, a), "__prefixed__"):
                 commands.append((a, getattr(getattr(Extensions, a), "__accesslevel__")));
         for imp in imps:
             for cls in imp.__dict__:
                 obj = getattr(imp, cls);
                 if isinstance(obj, type) and obj.__module__ == imp.__name__:
                     for a in obj.__dict__.keys():
-                        if hasattr(getattr(obj, a), "__accesslevel__"):
+                        if hasattr(getattr(obj, a), "__accesslevel__") and not hasattr(getattr(obj, a), "__prefixed__"):
                             commands.append((a, getattr(getattr(obj, a), "__accesslevel__")));
         commands.sort(key = lambda x: x[0], reverse=False);
         commands.sort(key = lambda x: x[1], reverse=False);
         return commands;
-
-    @accesslvl(0)
-    def ping(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
-        self.chat(sock, sendTo, "Pong!");
-        return;
-
-    @accesslvl(6)
-    def reload(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
-        """
-        Reloads all extensions for the bot.
-
-        Usage: !reload
-        """
-        return;
-
-    @accesslvl(6)
-    def raw(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
-        """
-        Sends a raw message to IRC.
-
-        Usage: !raw <message>
-        """
-        self.send(sock, " ".join(msg[0:]));
-        return;
-
-    @accesslvl(6)
-    def sql(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
-        """
-        Runs a SQLite query.
-
-        Usage: !sql <query>
-        """
-        sqlite.Execute(" ".join(msg));
-        response = sqlite.cur.fetchall();
-        self.chat(sock, sendTo, response);
-        return;
-
-    @accesslvl(1)
-    def setaccesslevel(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
-        """
-        Changes a selected user's access level. You cannot change your own or of people your level or higher, and you cannot set a user to your level or higher. Only works on registered users, and must be the registered account name.
-
-        Usage: !setaccesslevel <user> <level>
-        """
-        message = "";
-        if len(msg) != 2:
-            message = "You must enter a username and an access level to set them to!";
-        else:
-            accesslevel = -1;
-            try:
-                accesslevel = int(msg[1]);
-            except ValueError:
-                message = "You must enter a valid number for access level!";
-            if accesslevel <= 0:
-                message = "Target access level must be greater than zero!";
-            else:
-                if accesslevel >= accesslvl:
-                    message = "You cannot set an access level equal to or higher than your own!";
-                else:
-                    if sqlite.DoesUserExist(msg[0]) == False:
-                        message = "That user does not exist!";
-                    else:
-                        if sqlite.GetAccessLevel(msg[0]) >= accesslvl:
-                            message = "You cannot alter the access level of a user already at or above yours!";
-                        else:
-                            if sqlite.GetRegisteredName(sender).lower() == msg[0].lower():
-                                message = "You cannot alter your own access level!";
-                            else:
-                                sqlite.SetAccessLevel(msg[0], accesslevel);
-                                message = "User {0}'s access level successfully changed to {1}.".format(msg[0], accesslevel);
-        self.chat(sock, sendTo, message);
-        return;
-
-    @accesslvl(0)
-    def accesslevel(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
-        """
-        Returns the target's access level.
-
-        Usage: !accesslevel [target]
-        """
-        user = sender;
-        if len(msg) >= 1:
-            user = msg[0];
-        self.chat(sock, sendTo, "{0} has an access level of {1}.".format(user, sqlite.GetAccessLevel(user)));
-        return;
-
-    @accesslvl(6)
-    def debug(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
-        """
-        Debug command to get various bits of information.
-
-        Usage: !debug [whatever parameters coded for at the moment]
-        """
-        message = "";
-        for cmd in Extensions.getCommands():
-            if message != "":
-                message = "{}, ".format(message);
-            message = "{}[{}] {}".format(message, cmd[1], cmd[0]);
-        if message == "":
-            message = "None";
-        self.chat(sock, sendTo, message);
-        return;
 
     @accesslvl(0)
     def help(self, accesslvl, sock, sqlite, sender, receiver, sendTo, msg):
@@ -217,7 +125,7 @@ class Extensions:
                 docString = docString.replace("\n", " ");
                 docString = " ".join(docString.split());
                 accesslevel = "";
-                if hasattr(func, "__accesslevel__"):
+                if hasattr(func, "__accesslevel__") and not hasattr(func, "__prefixed__"):
                     accesslevel = "Access level: {0}".format(func.__accesslevel__);
                     message = "!{0} - {1}. {2}".format(func.__name__, accesslevel, docString);
                 else:
@@ -229,7 +137,7 @@ class Extensions:
                         obj = getattr(imp, clss);
                         if isinstance(obj, type) and obj.__module__ == imp.__name__:
                             if hasattr(obj, cmd):
-                                if hasattr(getattr(obj, cmd), "__accesslevel__"):
+                                if hasattr(getattr(obj, cmd), "__accesslevel__") and not hasattr(getattr(obj, cmd), "__prefixed__"):
                                     func = getattr(obj, cmd);
                                     docString = func.__doc__;
                                     if docString == None:
@@ -237,7 +145,7 @@ class Extensions:
                                     docString = docString.replace("\n", " ");
                                     docString = " ".join(docString.split());
                                     accesslevel = "";
-                                    if hasattr(func, "__accesslevel__"):
+                                    if hasattr(func, "__accesslevel__") and not hasattr(func, "__prefixed__"):
                                         found = True;
                                         accesslevel = "Access level: {0}".format(func.__accesslevel__);
                                         message = "!{0} - {1}. {2}".format(func.__name__, accesslevel, docString);
@@ -257,13 +165,13 @@ class Extensions:
             if msg[0][0] == '!':
                 command = msg[0][1:].lower();
                 if hasattr(self, command):
-                    if hasattr(getattr(self, command), "__accesslevel__"):
+                    if hasattr(getattr(self, command), "__accesslevel__") and not hasattr(getattr(self, command), "__prefixed__"):
                         getattr(self, command)(accessLevel, sock, SQLite, sender, receiver, sendTo, msg[1:]);
                 for imp in Extensions.imports():
                     for clss in imp.__dict__:
                         obj = getattr(imp, clss);
                         if isinstance(obj, type) and obj.__module__ == imp.__name__:
                             if hasattr(obj, command):
-                                if hasattr(getattr(obj, command), "__accesslevel__"):
+                                if hasattr(getattr(obj, command), "__accesslevel__") and not hasattr(getattr(obj, command), "__prefixed__"):
                                     getattr(obj,command)(self, accessLevel, sock, SQLite, sender, receiver, sendTo, msg[1:]);
         return;

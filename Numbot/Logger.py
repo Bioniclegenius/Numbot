@@ -19,6 +19,7 @@ class colors(Enum):
     DEFAULT = "\x1b[0m";
 
 class Logger:
+
     def log(message = "", color = colors.DEFAULT):
         message = "{0}".format(message);
         while message[-1:] == "\n" or message[-1:] == "\r":
